@@ -1,0 +1,3 @@
+[submodule "gridworlds"]
+	path = gridworlds
+	url = https://github.com/ibrahim-elshar/gym-windy-gridworlds.git
