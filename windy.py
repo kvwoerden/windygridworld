@@ -1,5 +1,6 @@
 import argparse
 import sys
+import os
 
 import gym
 from gym import wrappers, logger
@@ -25,15 +26,15 @@ if __name__ == '__main__':
     logger.set_level(logger.INFO)
 
     # env = gym.make(args.env_id)
-    env = gym.make('WindyGridWorldEnv-v0')
+    env = gym.make('WindyGridWorld-v0')
     # rec = VideoRecorder(env, path='./video/output01.mp4')
 
     # You provide the directory to write to (can be an existing
     # directory, including one with existing data -- all monitor files
     # will be namespaced). You can also dump to a tempdir if you'd
     # like: tempfile.mkdtemp().
-    outdir = './video/random-agent-results'
-    env = wrappers.Monitor(env, directory=outdir, force=True)
+    # outdir = './video/random-agent-results'
+    # env = wrappers.Monitor(env, directory=outdir, force=True)
     env.seed(0)
     agent = RandomAgent(env.action_space)
 
@@ -44,9 +45,14 @@ if __name__ == '__main__':
     for i in range(episode_count):
         ob = env.reset()
         while True:
-            env.render()
+            # env.render()
             action = agent.act(ob, reward, done)
             ob, reward, done, _ = env.step(action)
+            # print("###")
+            # print("ob: ", ob)
+            # print("reward:", reward)
+            # print(":done: ", done)
+            env.render()
             if done:
                 break
             # Note there's no env.render() here. But the environment still can open window and
