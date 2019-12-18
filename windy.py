@@ -1,14 +1,9 @@
-# Demo for recording videos of OpenAI environments. Adapted from
-# https://github.com/openai/gym/blob/5404b39d06f72012f562ec41f60734bd4b5ceb4b/gym/wrappers/monitoring/tests/test_video_recorder.py
-# and
-# https://github.com/openai/gym/blob/5404b39d06f72012f562ec41f60734bd4b5ceb4b/examples/agents/random_agent.py
-
-
 import argparse
 import sys
 
 import gym
 from gym import wrappers, logger
+import gym_windy_gridworlds
 
 import numpy as np
 
@@ -21,15 +16,16 @@ class RandomAgent(object):
         return self.action_space.sample()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=None)
-    parser.add_argument('env_id', nargs='?', default='CartPole-v0', help='Select the environment to run')
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description=None)
+    # parser.add_argument('env_id', nargs='?', default='WindyGridWorldEnv-v0', help='Select the environment to run')
+    # args = parser.parse_args()
 
     # You can set the level to logger.DEBUG or logger.WARN if you
     # want to change the amount of output.
     logger.set_level(logger.INFO)
 
-    env = gym.make(args.env_id)
+    # env = gym.make(args.env_id)
+    env = gym.make('WindyGridWorldEnv-v0')
     # rec = VideoRecorder(env, path='./video/output01.mp4')
 
     # You provide the directory to write to (can be an existing
