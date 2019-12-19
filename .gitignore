@@ -131,3 +131,6 @@ dmypy.json
 # video files
 *.mp4
 video/**/*.json
+
+# images
+image/
