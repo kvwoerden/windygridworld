@@ -9,6 +9,11 @@ import gym_windy_gridworlds
 import numpy as np
 import random
 
+import time
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+
 class RandomAgent(object):
     """The world's simplest agent!"""
     def __init__(self, action_space):
@@ -88,6 +93,15 @@ if __name__ == '__main__':
     steps = np.zeros((episode_count, 2))
     steps[:, 0] = np.arange(episode_count)
     INTERVAL = 500
+    SCRIPT_DIR = Path(os.path.dirname(os.path.realpath(__file__)))
+    TIMESTR = time.strftime("%Y%m%d-%H%M%S")
+    IMAGES_PATH = SCRIPT_DIR / 'images' / TIMESTR
+    print(IMAGES_PATH)
+    os.mkdir(IMAGES_PATH)
+    a = np.random.random((16, 16))
+    plt.imshow(a, cmap='hot', interpolation='nearest')
+    plt.savefig(IMAGES_PATH / 'test.png')
+    input()
 
     for i in range(episode_count):
         state = env.reset()
