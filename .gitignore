@@ -133,4 +133,4 @@ dmypy.json
 video/**/*.json
 
 # images
-image/
+image/**
