@@ -14,6 +14,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+import asyncio
+
+from copy import deepcopy
+
 class RandomAgent(object):
     """The world's simplest agent!"""
     def __init__(self, action_space):
@@ -57,16 +61,27 @@ class SarsaAgent(object):
     def updateQ(self, state, action, stateprime, actionprime, reward, gamma, alpha):
         self.Q[state[0], state[1], action] += alpha*(reward + gamma*self.Q[stateprime[0], stateprime[1], actionprime] - self.Q[state[0], state[1], action]) 
 
-        
+async def savefigure(Q, axis, cmap, interpolation, images_path, step, zeroes, title, episode):
+    print("Saving the estimation of Q at step " + str(step))
+    font = {'weight' : 'bold',
+        'size'   : 22}
+    plt.rc('font', **font)
+    plt.figure(figsize=(19.2, 10.8))
+    plt.imshow(np.max(Q, axis=axis), cmap=cmap, interpolation=interpolation)
+    cbar = plt.colorbar()
+    cbar.set_label('Value estimate')
+    plt.title(title)
+    ax = plt.gca()
+    ax.set_xticks(range(10))
+    ax.set_xticklabels([0, 0, 0, 1, 1, 1, 2, 2, 1, 0])
+    ax.set_yticks([])
+    ax.set_xlabel("Step: " + str(step).zfill(5) + "\nEpisode: " + str(episode).zfill(3))
+    plt.savefig(images_path / ('Q' + str(step).zfill(zeroes) + '.png'), dpi=100)
+    plt.close()
 
 
-if __name__ == '__main__':
-    # parser = argparse.ArgumentParser(description=None)
-    # parser.add_argument('env_id', nargs='?', default='WindyGridWorldEnv-v0', help='Select the environment to run')
-    # args = parser.parse_args()
 
-    # You can set the level to logger.DEBUG or logger.WARN if you
-    # want to change the amount of output.
+async def main():
     logger.set_level(logger.INFO)
 
     # env = gym.make(args.env_id)
@@ -98,10 +113,13 @@ if __name__ == '__main__':
     print(IMAGES_PATH)
     os.mkdir(IMAGES_PATH)
     STEP = 0
-    STEP_INTERVAL = 20
+    STEP_INTERVAL = 6
     EPSILON_INTERACTIVE = False
     RENDER = False
-    ZEROES = 4
+    ZEROES = 5
+    tasks = []
+    Q_state = {}
+    TITLE = "Windy Gridworld Sarsa agent \n epsilon=0.1, alpha=0.5"
     # a = np.random.random((16, 16))
     # b = np.random.random((16, 16))
     # plt.imshow(a, cmap='bwr', interpolation='nearest')
@@ -117,8 +135,9 @@ if __name__ == '__main__':
             if i % INTERVAL == 0 and RENDER:
                 env.render()
             if STEP % STEP_INTERVAL == 0:
-                plt.imshow(np.max(agent.Q, axis=2), cmap='bwr', interpolation='nearest')
-                plt.savefig(IMAGES_PATH / ('Q' + str(STEP).zfill(ZEROES) + '.png'))
+                Q_state[STEP] = np.copy(agent.Q)
+                task = asyncio.create_task(savefigure(Q_state[STEP], axis=2, cmap='bwr', interpolation='nearest', images_path=IMAGES_PATH, step=STEP, zeroes=ZEROES, title=TITLE, episode=i))
+                tasks.append(task)
 
             # print("Currently at position: ", env.observation)
             stateprime, reward, done, _ = env.step(action)
@@ -141,7 +160,7 @@ if __name__ == '__main__':
                         epsilon_string = input()
                         if epsilon_string != '':
                             EPSILON = float(epsilon_string)
-                print("Done with episode " + str(i) + " at step " + str(STEP))
+                # print("Done with episode " + str(i) + " at step " + str(STEP))
                 break
             # Note there's no env.render() here. But the environment still can open window and
             # render if asked by env.monitor: it calls env.render('rgb_array') to record video.
@@ -150,4 +169,14 @@ if __name__ == '__main__':
     # Close the env and write monitor result info to disk
            
     env.close()
+    asyncio.wait(tasks)
     print(steps[-20:,:])
+
+if __name__ == '__main__':
+    asyncio.run(main())
+    # parser = argparse.ArgumentParser(description=None)
+    # parser.add_argument('env_id', nargs='?', default='WindyGridWorldEnv-v0', help='Select the environment to run')
+    # args = parser.parse_args()
+
+    # You can set the level to logger.DEBUG or logger.WARN if you
+    # want to change the amount of output.
