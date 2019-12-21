@@ -133,4 +133,5 @@ dmypy.json
 video/**/*.json
 
 # images
-images/
+images/**/*.png
+images/**/*.DS_Store
