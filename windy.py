@@ -61,7 +61,7 @@ class SarsaAgent(object):
     def updateQ(self, state, action, stateprime, actionprime, reward, gamma, alpha):
         self.Q[state[0], state[1], action] += alpha*(reward + gamma*self.Q[stateprime[0], stateprime[1], actionprime] - self.Q[state[0], state[1], action]) 
 
-async def savefigure(Q, axis, cmap, interpolation, images_path, step, zeroes, title, episode):
+async def savefigure(Q, axis, cmap, interpolation, images_path, step, zeroes, title, episode, min_steps):
     print("Saving the estimation of Q at step " + str(step))
     font = {'weight' : 'bold',
         'size'   : 22}
@@ -75,7 +75,7 @@ async def savefigure(Q, axis, cmap, interpolation, images_path, step, zeroes, ti
     ax.set_xticks(range(10))
     ax.set_xticklabels([0, 0, 0, 1, 1, 1, 2, 2, 1, 0])
     ax.set_yticks([])
-    ax.set_xlabel("Step: " + str(step).zfill(5) + "\nEpisode: " + str(episode).zfill(3))
+    ax.set_xlabel("Step: " + str(step).zfill(5) + "\nEpisode: " + str(episode).zfill(3) + ", Length of best path found so far: " + str(min_steps))
     plt.savefig(images_path / ('Q' + str(step).zfill(zeroes) + '.png'), dpi=100)
     plt.close()
 
@@ -85,7 +85,7 @@ async def main():
     logger.set_level(logger.INFO)
 
     # env = gym.make(args.env_id)
-    env = gym.make('WindyGridWorld-v0')
+    env = gym.make('KingWindyGridWorld-v0')
     # rec = VideoRecorder(env, path='./video/output01.mp4')
 
     # You provide the directory to write to (can be an existing
@@ -119,7 +119,8 @@ async def main():
     ZEROES = 5
     tasks = []
     Q_state = {}
-    TITLE = "Windy Gridworld Sarsa agent \n epsilon=0.1, alpha=0.5"
+    TITLE = "Kings Moves Windy Gridworld Sarsa agent \n epsilon=0.1, alpha=0.5"
+    PLOT = True
     # a = np.random.random((16, 16))
     # b = np.random.random((16, 16))
     # plt.imshow(a, cmap='bwr', interpolation='nearest')
@@ -130,17 +131,25 @@ async def main():
     for i in range(episode_count):
         state = env.reset()
         action = agent.choose_act(state, EPSILON)
+        moves = []
 
         while True:
             if i % INTERVAL == 0 and RENDER:
                 env.render()
-            if STEP % STEP_INTERVAL == 0:
+            if STEP % STEP_INTERVAL == 0 and PLOT:
                 Q_state[STEP] = np.copy(agent.Q)
-                task = asyncio.create_task(savefigure(Q_state[STEP], axis=2, cmap='bwr', interpolation='nearest', images_path=IMAGES_PATH, step=STEP, zeroes=ZEROES, title=TITLE, episode=i))
+                try:
+                    min_steps = np.amin(steps[:,1][:i])
+                    # print("### steps\n", steps[:,1][:i])
+                    # print("### npmin", min_steps)
+                except ValueError:
+                    min_steps = np.inf
+                task = asyncio.create_task(savefigure(Q_state[STEP], axis=2, cmap='bwr', interpolation='nearest', images_path=IMAGES_PATH, step=STEP, zeroes=ZEROES, title=TITLE, episode=i, min_steps=min_steps))
                 tasks.append(task)
 
             # print("Currently at position: ", env.observation)
             stateprime, reward, done, _ = env.step(action)
+            moves.append((state, action))
             steps[i, 1] += 1
             # env.render()
             # action = agent.act(ob, reward, done)
@@ -150,6 +159,8 @@ async def main():
             action = actionprime
             STEP += 1
             if done:
+                if steps[:,1][:i].size != 0 and steps[i, 1] < np.amin(steps[:,1][:i]):
+                    print("New shortest path of length " + str(int(steps[i,1])) + " found: \n", moves)
                 if i % INTERVAL == 0:
                     if RENDER:
                         env.render()
